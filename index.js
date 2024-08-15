@@ -31,9 +31,17 @@ const client = new MongoClient(uri, {
 });
 async function run() {
     try {
-        const productsCollection = client.db('try').collection('product')
-       
+        const products = client.db('productsDB').collection('products')
+        const categories = client.db('productsDB').collection('categories ')
+        const brands = client.db('productsDB').collection('brands ')
+        const priceRanges = client.db('productsDB').collection('priceRanges ')
 
+
+
+        app.get('/products', async (req, res) => {
+            const result = await products.find().toArray()
+            res.send(result)
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
@@ -45,7 +53,7 @@ async function run() {
 run().catch(console.dir);
 
 app.get('/', (req, res) => {
-    res.send('Hello from SoloSphere Server....')
+    res.send('Hello from Connect....')
 })
 
 app.listen(port, () => console.log(`Server running on port ${port}`))
