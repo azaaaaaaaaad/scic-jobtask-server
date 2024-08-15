@@ -41,7 +41,11 @@ async function run() {
         app.get('/products', async (req, res) => {
             const filter = req.query
             console.log(filter)
-            const query = {};
+            const query = {
+                ProductName: {
+                    $regex: filter.search, $options: 'i'
+                }
+            };
 
             const options = {
                 sort: {
