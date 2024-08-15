@@ -39,7 +39,16 @@ async function run() {
 
 
         app.get('/products', async (req, res) => {
-            const result = await products.find().toArray()
+            const filter = req.query
+            console.log(filter)
+            const query = {};
+
+            const options = {
+                sort: {
+                    Price: filter.sort === 'asc' ? 1 : -1
+                }
+            }
+            const result = await products.find(query, options).toArray()
             res.send(result)
         })
 
