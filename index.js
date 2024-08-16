@@ -32,29 +32,66 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         const products = client.db('productsDB').collection('products')
-        const categories = client.db('productsDB').collection('categories ')
-        const brands = client.db('productsDB').collection('brands ')
-        const priceRanges = client.db('productsDB').collection('priceRanges ')
+        // const categories = client.db('productsDB').collection('categories ')
+        // const brands = client.db('productsDB').collection('brands ')
+        // const priceRanges = client.db('productsDB').collection('priceRanges ')
 
 
+
+        // app.get('/products', async (req, res) => {
+        //     const filter = req.query
+        //     console.log(filter)
+        //     const query = {
+        //         ProductName: {
+        //             $regex: filter.search, $options: 'i'
+        //         }
+        //     };
+
+        //     const options = {
+        //         sort: {
+        //             Price: filter.sort === 'asc' ? 1 : -1
+        //         }
+        //     }
+        //     const result = await products.find(query, options).toArray()
+        //     res.send(result)
+        // })
 
         app.get('/products', async (req, res) => {
-            const filter = req.query
-            console.log(filter)
+            const filter = req.query;
+            console.log(filter);
+        
             const query = {
                 ProductName: {
-                    $regex: filter.search, $options: 'i'
+                    $regex: filter.search || '', // Default to an empty string if no search term
+                    $options: 'i'
                 }
             };
-
-            const options = {
-                sort: {
-                    Price: filter.sort === 'asc' ? 1 : -1
-                }
+        
+            const sortOptions = {};
+            
+            // Add sorting logic based on filter.sort
+            if (filter.sort === 'asc') {
+                sortOptions.Price = 1;
+            } else if (filter.sort === 'desc') {
+                sortOptions.Price = -1;
+            } else if (filter.sort === 'dateAsc') {
+                sortOptions.CreationDateTime = 1;
+            } else if (filter.sort === 'dateDesc') {
+                sortOptions.CreationDateTime = -1;
             }
-            const result = await products.find(query, options).toArray()
-            res.send(result)
-        })
+        
+            const options = {
+                sort: sortOptions
+            };
+        
+            try {
+                const result = await products.find(query, options).toArray();
+                res.send(result);
+            } catch (err) {
+                console.error("Error fetching products:", err);
+                res.status(500).send({ error: 'Error fetching products' });
+            }
+        });
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
