@@ -9,6 +9,9 @@ const corsOptions = {
     origin: [
         'http://localhost:5173',
         'http://localhost:5174',
+        'https://scic-jobtask-server-rose.vercel.app',
+        'https://scic-jobtask-client.vercel.app',
+        'https://solosphere-90d2d.web.app'
     ],
     credentials: true,
     optionSuccessStatus: 200,
@@ -32,31 +35,53 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         const products = client.db('productsDB').collection('products')
-        // const categories = client.db('productsDB').collection('categories ')
-        // const brands = client.db('productsDB').collection('brands ')
-        // const priceRanges = client.db('productsDB').collection('priceRanges ')
-
 
 
         // app.get('/products', async (req, res) => {
-        //     const filter = req.query
-        //     console.log(filter)
+        //     const size = parseInt(req.query.size)
+        //     const page = parseInt(req.query.page) - 1
+            
+        //     const filter = req.query;
+        //     console.log(filter);
+
         //     const query = {
         //         ProductName: {
-        //             $regex: filter.search, $options: 'i'
+        //             $regex: filter.search || '', // Default to an empty string if no search term
+        //             $options: 'i'
         //         }
         //     };
 
-        //     const options = {
-        //         sort: {
-        //             Price: filter.sort === 'asc' ? 1 : -1
-        //         }
+        //     const sortOptions = {};
+
+        //     // Add sorting logic based on filter.sort
+        //     if (filter.sort === 'asc') {
+        //         sortOptions.Price = 1;
+        //     } else if (filter.sort === 'desc') {
+        //         sortOptions.Price = -1;
+        //     } else if (filter.sort === 'dateAsc') {
+        //         sortOptions.CreationDateTime = 1;
+        //     } else if (filter.sort === 'dateDesc') {
+        //         sortOptions.CreationDateTime = -1;
         //     }
-        //     const result = await products.find(query, options).toArray()
-        //     res.send(result)
-        // })
+
+        //     const options = {
+        //         sort: sortOptions
+        //     };
+
+        //     try {
+        //         const result = await products.find(query, options).skip(page*size).limit(size).toArray();
+        //         res.send(result);
+        //     } catch (err) {
+        //         console.error("Error fetching products:", err);
+        //         res.status(500).send({ error: 'Error fetching products' });
+        //     }
+        // });
+
 
         app.get('/products', async (req, res) => {
+            const size = parseInt(req.query.size) || 6; // Default to 6 if not provided
+            const page = parseInt(req.query.page) - 1 || 0; // Default to 0 if not provided
+        
             const filter = req.query;
             console.log(filter);
         
@@ -68,7 +93,7 @@ async function run() {
             };
         
             const sortOptions = {};
-            
+        
             // Add sorting logic based on filter.sort
             if (filter.sort === 'asc') {
                 sortOptions.Price = 1;
@@ -85,13 +110,21 @@ async function run() {
             };
         
             try {
-                const result = await products.find(query, options).toArray();
+                const result = await products.find(query, options).skip(page * size).limit(size).toArray();
                 res.send(result);
             } catch (err) {
                 console.error("Error fetching products:", err);
                 res.status(500).send({ error: 'Error fetching products' });
             }
         });
+        
+       
+
+        app.get('/products-count', async (req, res) => {
+            const count = await products.countDocuments()
+            res.send({ count })
+        })
+
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
@@ -107,4 +140,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => console.log(`Server running on port ${port}`))
+
 
