@@ -45,37 +45,55 @@ async function run() {
         // Get reference to the products collection
         const products = client.db('productsDB').collection('products');
 
-        // Endpoint to get products with pagination, sorting, and filtering
+     
         app.get('/products', async (req, res) => {
             try {
                 const size = parseInt(req.query.size) || 6; // Default to 6 if not provided
                 const page = (parseInt(req.query.page) || 1) - 1; // Default to 0 if not provided
-
-                const filter = req.query;
-                const query = {
-                    ProductName: {
-                        $regex: filter.search || '', // Default to an empty string if no search term
-                        $options: 'i'
-                    }
+                const search = req.query.search || '';
+                const sort = req.query.sort || '';
+                const filter = req.query.filter || '';
+        
+                let query = {
+                    ProductName: { $regex: search, $options: 'i' }
                 };
-
+        
+                // Apply filters
+                if (filter) {
+                    if (filter.startsWith('PriceRange')) {
+                        const priceRange = filter.replace('PriceRange', '');
+                        if (priceRange === '1') {
+                            query.Price = { $gte: 0, $lte: 1000 };
+                        } else if (priceRange === '2') {
+                            query.Price = { $gte: 1001, $lte: 2000 };
+                        } else if (priceRange === '3') {
+                            query.Price = { $gte: 2001, $lte: 3000 };
+                        }
+                    } else if (filter.startsWith('BrandName')) {
+                        const brandName = filter.replace('BrandName', '');
+                        query.BrandName = brandName;
+                    } else {
+                        query.Category = filter;
+                    }
+                }
+        
                 // Sorting options based on query parameter
                 const sortOptions = {};
-                if (filter.sort === 'asc') {
+                if (sort === 'asc') {
                     sortOptions.Price = 1;
-                } else if (filter.sort === 'desc') {
+                } else if (sort === 'desc') {
                     sortOptions.Price = -1;
-                } else if (filter.sort === 'dateAsc') {
+                } else if (sort === 'dateAsc') {
                     sortOptions.CreationDateTime = 1;
-                } else if (filter.sort === 'dateDesc') {
+                } else if (sort === 'dateDesc') {
                     sortOptions.CreationDateTime = -1;
                 }
-
+        
                 const options = {
                     sort: sortOptions
                 };
-
-                // Fetch products from MongoDB with pagination and sorting
+        
+                // Fetch products from MongoDB with filtering, sorting, and pagination
                 const result = await products.find(query, options).skip(page * size).limit(size).toArray();
                 res.send(result);
             } catch (err) {
@@ -83,17 +101,86 @@ async function run() {
                 res.status(500).send({ error: 'Error fetching products' });
             }
         });
+        
 
-        // Endpoint to get total count of products
         app.get('/products-count', async (req, res) => {
             try {
-                const count = await products.countDocuments();
+                const search = req.query.search || '';
+                const filter = req.query.filter || '';
+
+                let query = {
+                    ProductName: { $regex: search, $options: 'i' }
+                };
+
+                // Apply filters
+                if (filter) {
+                    if (filter.startsWith('Price')) {
+                        const priceRange = filter.replace('Price', '');
+                        if (priceRange === '1') {
+                            query.Price = { $gte: 0, $lte: 1000 };
+                        } else if (priceRange === '2') {
+                            query.Price = { $gte: 1001, $lte: 2000 };
+                        } else if (priceRange === '3') {
+                            query.Price = { $gte: 2001, $lte: 3000 };
+                        }
+                    } else if (filter.startsWith('BrandName')) {
+                        const brandName = filter.replace('BrandName', '');
+                        query.BrandName = brandName;
+                    } else {
+                        query.Category = filter;
+                    }
+                }
+
+                // Get total count of products matching the query
+                const count = await products.countDocuments(query);
                 res.send({ count });
             } catch (err) {
                 console.error("Error fetching product count:", err);
                 res.status(500).send({ error: 'Error fetching product count' });
             }
         });
+
+
+        app.get('/products-count', async (req, res) => {
+            try {
+                const search = req.query.search || '';
+                const filter = req.query.filter || '';
+        
+                let query = {
+                    ProductName: { $regex: search, $options: 'i' }
+                };
+        
+                // Apply filters
+                if (filter) {
+                    if (filter.startsWith('PriceRange')) {
+                        const priceRange = filter.replace('PriceRange', '');
+                        if (priceRange === '1') {
+                            query.Price = { $gte: 0, $lte: 1000 };
+                        } else if (priceRange === '2') {
+                            query.Price = { $gte: 1001, $lte: 2000 };
+                        } else if (priceRange === '3') {
+                            query.Price = { $gte: 2001, $lte: 3000 };
+                        }
+                    } else if (filter.startsWith('BrandName')) {
+                        const brandName = filter.replace('BrandName', '');
+                        query.BrandName = brandName;
+                    } else {
+                        query.Category = filter;
+                    }
+                }
+        
+                // Get total count of products matching the query
+                const count = await products.countDocuments(query);
+                res.send({ count });
+            } catch (err) {
+                console.error("Error fetching product count:", err);
+                res.status(500).send({ error: 'Error fetching product count' });
+            }
+        });
+        
+
+
+
 
     } catch (err) {
         console.error("Error connecting to MongoDB:", err);
@@ -112,3 +199,5 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
+
+
