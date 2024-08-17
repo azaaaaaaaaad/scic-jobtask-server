@@ -13,8 +13,8 @@ const corsOptions = {
     origin: [
         'http://localhost:5173',
         'http://localhost:5174',
+        'http://localhost:9000',
         'https://scic-jobtask-server-rose.vercel.app',
-        'https://scic-jobtask-client.vercel.app',
         'https://solosphere-90d2d.web.app'
     ],
     credentials: true,
@@ -43,7 +43,7 @@ async function run() {
         console.log("Successfully connected to MongoDB!");
 
         // Get reference to the products collection
-        const products = client.db('productsDB').collection('products');
+        const productsCollection = client.db('productsDB').collection('products');
 
      
         app.get('/products', async (req, res) => {
@@ -94,7 +94,7 @@ async function run() {
                 };
         
                 // Fetch products from MongoDB with filtering, sorting, and pagination
-                const result = await products.find(query, options).skip(page * size).limit(size).toArray();
+                const result = await productsCollection.find(query, options).skip(page * size).limit(size).toArray();
                 res.send(result);
             } catch (err) {
                 console.error("Error fetching products:", err);
@@ -132,7 +132,7 @@ async function run() {
                 }
 
                 // Get total count of products matching the query
-                const count = await products.countDocuments(query);
+                const count = await productsCollection.countDocuments(query);
                 res.send({ count });
             } catch (err) {
                 console.error("Error fetching product count:", err);
@@ -140,46 +140,42 @@ async function run() {
             }
         });
 
-
-        app.get('/products-count', async (req, res) => {
-            try {
-                const search = req.query.search || '';
-                const filter = req.query.filter || '';
+        //     try {
+        //         const search = req.query.search || '';
+        //         const filter = req.query.filter || '';
         
-                let query = {
-                    ProductName: { $regex: search, $options: 'i' }
-                };
+        //         let query = {
+        //             ProductName: { $regex: search, $options: 'i' }
+        //         };
         
-                // Apply filters
-                if (filter) {
-                    if (filter.startsWith('PriceRange')) {
-                        const priceRange = filter.replace('PriceRange', '');
-                        if (priceRange === '1') {
-                            query.Price = { $gte: 0, $lte: 1000 };
-                        } else if (priceRange === '2') {
-                            query.Price = { $gte: 1001, $lte: 2000 };
-                        } else if (priceRange === '3') {
-                            query.Price = { $gte: 2001, $lte: 3000 };
-                        }
-                    } else if (filter.startsWith('BrandName')) {
-                        const brandName = filter.replace('BrandName', '');
-                        query.BrandName = brandName;
-                    } else {
-                        query.Category = filter;
-                    }
-                }
+        //         // Apply filters
+        //         if (filter) {
+        //             if (filter.startsWith('PriceRange')) {
+        //                 const priceRange = filter.replace('PriceRange', '');
+        //                 if (priceRange === '1') {
+        //                     query.Price = { $gte: 0, $lte: 1000 };
+        //                 } else if (priceRange === '2') {
+        //                     query.Price = { $gte: 1001, $lte: 2000 };
+        //                 } else if (priceRange === '3') {
+        //                     query.Price = { $gte: 2001, $lte: 3000 };
+        //                 }
+        //             } else if (filter.startsWith('BrandName')) {
+        //                 const brandName = filter.replace('BrandName', '');
+        //                 query.BrandName = brandName;
+        //             } else {
+        //                 query.Category = filter;
+        //             }
+        //         }
         
-                // Get total count of products matching the query
-                const count = await products.countDocuments(query);
-                res.send({ count });
-            } catch (err) {
-                console.error("Error fetching product count:", err);
-                res.status(500).send({ error: 'Error fetching product count' });
-            }
-        });
+        //         // Get total count of products matching the query
+        //         const count = await products.countDocuments(query);
+        //         res.send({ count });
+        //     } catch (err) {
+        //         console.error("Error fetching product count:", err);
+        //         res.status(500).send({ error: 'Error fetching product count' });
+        //     }
+        // });
         
-
-
 
 
     } catch (err) {
